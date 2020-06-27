@@ -434,7 +434,7 @@ TEST_P(ModelTest, Run) {
         so.use_per_session_threads = false;
       else
         so.intra_op_param.thread_pool_size = 1; //Disable the kernel thread pool
-
+      so.execution_mode = execution_mode;
       so.session_logid = ToMBString(test_case_name);
       so.session_log_severity_level = (int)logging::Severity::kERROR;
       InferenceSession session_object(so, (**ort_env).GetEnvironment());
