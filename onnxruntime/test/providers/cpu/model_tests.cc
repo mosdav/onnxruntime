@@ -266,23 +266,7 @@ TEST_P(ModelTest, Run) {
     broken_tests.insert({"softmax_cross_entropy_sum_log_prob_expanded", "Shape mismatch"});
   }
 
-  if (provider_name == "tensorrt") {
-    broken_tests.insert({"fp16_shufflenet", "TRT EP bug"});
-    broken_tests.insert({"fp16_inception_v1", "TRT EP bug"});
-    broken_tests.insert({"fp16_tiny_yolov2", "TRT EP bug"});
-    broken_tests.insert({"tf_inception_v3", "TRT Engine couldn't be created"});
-    broken_tests.insert({"tf_mobilenet_v1_1.0_224", "TRT Engine couldn't be created"});
-    broken_tests.insert({"tf_mobilenet_v2_1.0_224", "TRT Engine couldn't be created"});
-    broken_tests.insert({"tf_mobilenet_v2_1.4_224", "TRT Engine couldn't be created"});
-    broken_tests.insert({"tf_resnet_v1_101", "TRT Engine couldn't be created"});
-    broken_tests.insert({"tf_resnet_v1_152", "TRT Engine couldn't be created"});
-    broken_tests.insert({"tf_resnet_v1_50", "TRT Engine couldn't be created"});
-    broken_tests.insert({"tf_resnet_v2_101", "TRT Engine couldn't be created"});
-    broken_tests.insert({"tf_resnet_v2_152", "TRT Engine couldn't be created"});
-    broken_tests.insert({"tf_resnet_v2_50", "TRT Engine couldn't be created"});
-    broken_tests.insert({"convtranspose_1d", "1d convtranspose not supported yet"});
-    broken_tests.insert({"convtranspose_3d", "3d convtranspose not supported yet"});
-  }
+ 
 
   if (provider_name == "cuda") {
     broken_tests.insert({"candy", "result mismatch"});
@@ -666,19 +650,44 @@ TEST_P(ModelTest, Run) {
                                                      ORT_TSTR("convtranspose_1d"),
                                                      ORT_TSTR("convtranspose_3d"),
                                                      ORT_TSTR("maxpool_2d_uint8")};
-  for (const ORTCHAR_T* provider_name : provider_names) {
+    static const ORTCHAR_T* tensorrt_disabled_tests[] = {ORT_TSTR("udnie"), ORT_TSTR("rain_princess"),
+                                                     ORT_TSTR("pointilism"), ORT_TSTR("mosaic"),
+                                                     ORT_TSTR("LSTM_Seq_lens_unpacked"),
+                                                     ORT_TSTR("cgan"), ORT_TSTR("candy"),
+                                                     ORT_TSTR("tinyyolov3"), ORT_TSTR("yolov3"),
+                                                     ORT_TSTR("mlperf_ssd_resnet34_1200"), ORT_TSTR("mlperf_ssd_mobilenet_300"),
+                                                     ORT_TSTR("mask_rcnn"),
+                                                     ORT_TSTR("faster_rcnn"),
+    ORT_TSTR("fp16_shufflenet"),
+ORT_TSTR("fp16_inception_v1"),
+ORT_TSTR("fp16_tiny_yolov2"),
+ORT_TSTR("tf_inception_v3"),
+ORT_TSTR("tf_mobilenet_v1_1.0_224"),
+ORT_TSTR("tf_mobilenet_v2_1.0_224"),
+ORT_TSTR("tf_mobilenet_v2_1.4_224"),
+ORT_TSTR("tf_resnet_v1_101"),
+ORT_TSTR("tf_resnet_v1_152"),
+ORT_TSTR("tf_resnet_v1_50"),
+ORT_TSTR("tf_resnet_v2_101"),
+ORT_TSTR("tf_resnet_v2_152"),
+ORT_TSTR("tf_resnet_v2_50"),
+ORT_TSTR("convtranspose_1d"),
+ORT_TSTR("convtranspose_3d")};
+    for (const ORTCHAR_T* provider_name : provider_names) {
     std::unordered_set<std::basic_string<ORTCHAR_T>> all_disabled_tests(std::begin(immutable_broken_tests),
                                                                         std::end(immutable_broken_tests));
     if (CompareCString(provider_name, ORT_TSTR("cuda")) == 0) {
       all_disabled_tests.insert(std::begin(cuda_flaky_tests), std::end(cuda_flaky_tests));
-    }
-    if (CompareCString(provider_name, ORT_TSTR("dml")) == 0) {
+    } else if (CompareCString(provider_name, ORT_TSTR("dml")) == 0) {
       all_disabled_tests.insert(std::begin(dml_disabled_tests), std::end(dml_disabled_tests));
-    }
-    if (CompareCString(provider_name, ORT_TSTR("dnnl")) == 0) {
+    } else if (CompareCString(provider_name, ORT_TSTR("dnnl")) == 0) {
       // these models run but disabled tests to keep memory utilization low
       // This will be removed after LRU implementation
       all_disabled_tests.insert(std::begin(dnnl_disabled_tests), std::end(dnnl_disabled_tests));
+    } else if (CompareCString(provider_name, ORT_TSTR("tensorrt")) == 0) {
+      // these models run but disabled tests to keep memory utilization low
+      // This will be removed after LRU implementation
+      all_disabled_tests.insert(std::begin(tensorrt_disabled_tests), std::end(tensorrt_disabled_tests));
     }
 #if !defined(__amd64__) && !defined(_M_AMD64)
     //out of memory
@@ -720,14 +729,14 @@ TEST_P(ModelTest, Run) {
           auto starts_with = [](const std::basic_string<PATH_CHAR_TYPE>& find_in, const std::basic_string<PATH_CHAR_TYPE>& find_what) {
             return find_in.compare(0, find_what.size(), find_what) == 0;
           };
-
+#ifdef DISABLE_ML_OPS
           if (starts_with(test_case_name, ORT_TSTR("XGBoost_")) ||
               starts_with(test_case_name, ORT_TSTR("coreml_")) ||
               starts_with(test_case_name, ORT_TSTR("scikit_")) ||
               starts_with(test_case_name, ORT_TSTR("libsvm_"))) {
             return true;
           }
-
+#endif
           std::basic_string<PATH_CHAR_TYPE> p = ConcatPathComponent<PATH_CHAR_TYPE>(node_data_root_path,
                                                                                     filename_str);
           std::basic_string<PATH_CHAR_TYPE> r = provider_name;
