@@ -42,16 +42,16 @@ class CudnnRNN {
     if (!cudnn_rnn_desc_)
       CUDNN_RETURN_IF_ERROR(cudnnCreateRNNDescriptor(&cudnn_rnn_desc_));
 
-    CUDNN_RETURN_IF_ERROR(cudnnSetRNNDescriptor(cudnnHandle,
-                                                cudnn_rnn_desc_,
-                                                gsl::narrow_cast<int>(hidden_size),
-                                                num_layers,
-                                                cudnn_dropout_desc,
-                                                CUDNN_LINEAR_INPUT,  // We can also skip the input matrix transformation
-                                                cudnn_direction_model,
-                                                rnn_mode,
-                                                CUDNN_RNN_ALGO_STANDARD,  //CUDNN_RNN_ALGO_PERSIST_STATIC, CUDNN_RNN_ALGO_PERSIST_DYNAMIC
-                                                dataType));
+    CUDNN_RETURN_IF_ERROR(cudnnSetRNNDescriptor_v6(cudnnHandle,
+                                                   cudnn_rnn_desc_,
+                                                   gsl::narrow_cast<int>(hidden_size),
+                                                   num_layers,
+                                                   cudnn_dropout_desc,
+                                                   CUDNN_LINEAR_INPUT,  // We can also skip the input matrix transformation
+                                                   cudnn_direction_model,
+                                                   rnn_mode,
+                                                   CUDNN_RNN_ALGO_STANDARD,  //CUDNN_RNN_ALGO_PERSIST_STATIC, CUDNN_RNN_ALGO_PERSIST_DYNAMIC
+                                                   dataType));
 
     return Status::OK();
   }
